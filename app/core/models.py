@@ -14,8 +14,23 @@ class UserManager(BaseUserManager):
         '''
         Create and save a new user.
         '''
-        user = self.model(email=email, **extra_fields)
+        if not email:
+            raise ValueError('Email had been compasory')
+
+        user = self.model(email=self.normalize_email(email), **extra_fields)
         user.set_password(password)
+        user.save(using=self._db)
+
+        return user
+
+    def create_superuser(self, email, password):
+        '''
+        Create and save new superuser.
+        '''
+        user = self.create_user(
+            email=email, password=password)
+        user.is_staff = True
+        user.is_superuser = True
         user.save(using=self._db)
 
         return user
@@ -31,7 +46,7 @@ class User(AbstractUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
 
-    object = UserManager()
+    objects = UserManager()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
